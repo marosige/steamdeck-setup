@@ -10,7 +10,7 @@ curl -L https://raw.githubusercontent.com/marosige/steamdeck-setup/main/setup.sh
 ```
 
 Mit csinál:
-- Decky Loader + pluginok: CSS Loader, SteamGridDB, EmuDecky
+- Decky Loader + pluginok: CSS Loader, SteamGridDB
 - CSS Loader témák a beállításaiddal: Clean Gameview, Round, Switch Like Home
 - CurseForge (Flatpak)
 - Battle.net (NonSteamLaunchers, Proton prefix + Steam shortcut)

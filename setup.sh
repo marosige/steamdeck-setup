@@ -5,14 +5,14 @@
 #
 # Amit csinal:
 #   1. Decky Loader telepitese
-#   2. Decky pluginok (CSS Loader, SteamGridDB, EmuDecky) a hivatalos store-bol
+#   2. Decky pluginok (CSS Loader, SteamGridDB) a hivatalos store-bol
 #   3. CSS Loader temak (Clean Gameview, Round, Switch Like Home) a kedvenc beallitasaiddal
 #   4. CurseForge (Flatpak)
 #   5. Battle.net (Proton prefixben, Steam shortcutkent – NonSteamLaunchers)
 set -euo pipefail
 
 # ====== BEALLITASOK – ezt szabd testre ==============================
-DECKY_PLUGINS=("CSS Loader" "SteamGridDB" "EmuDecky")
+DECKY_PLUGINS=("CSS Loader" "SteamGridDB")
 
 # tema neve -> JSON a beallitasaival (a CSS Loader config formatuma)
 declare -A THEME_CONFIG=(
