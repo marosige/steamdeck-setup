@@ -35,6 +35,7 @@ STORE_API="https://plugins.deckbrew.xyz/plugins"
 STORE_CDN="https://cdn.tzatzikiweeb.moe/file/steam-deck-homebrew/versions"
 THEME_API="https://api.deckthemes.com"
 FORCE="${FORCE:-0}"   # FORCE=1 reinstalls plugins/themes/Battle.net (theme settings are still kept)
+RESET_THEMES="${RESET_THEMES:-0}"   # RESET_THEMES=1 overwrites theme settings with the presets above
 CHANGED=0
 
 log()  { printf '\n\033[1;36m==> %s\033[0m\n' "$*"; }
@@ -48,11 +49,11 @@ plugin_dir_of() {
 
 # Write the enabled flag + settings for a theme. CSS Loader reads config_ROOT.json or
 # config_USER.json depending on which user it runs as, so write both.
-# An existing config is NEVER overwritten.
+# An existing config is only overwritten with RESET_THEMES=1.
 ensure_theme_config() {
   local dir="$1" theme="$2" suffix
   for suffix in ROOT USER; do
-    if [ ! -e "$HB/themes/$dir/config_$suffix.json" ]; then
+    if [ ! -e "$HB/themes/$dir/config_$suffix.json" ] || [ "$RESET_THEMES" = 1 ]; then
       jq -n --argjson v "${THEME_CONFIG[$theme]:-{\}}" '{active:true} + $v' \
         | sudo tee "$HB/themes/$dir/config_$suffix.json" >/dev/null
       CHANGED=1

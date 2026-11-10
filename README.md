@@ -22,7 +22,7 @@ No `sudo` password after a reset? The script asks you to set one.
 - Installs **Battle.net** (via [NonSteamLaunchers](https://github.com/moraroy/NonSteamLaunchers-On-Steam-Deck); installs silently, log in on first launch)
 
 Safe to re-run: installed items are skipped and your theme settings are never overwritten.
-`FORCE=1` reinstalls. Plugins, themes and settings are editable at the top of [`setup.sh`](setup.sh).
+`FORCE=1` reinstalls, `RESET_THEMES=1` re-applies the preset theme settings. Plugins, themes and settings are editable at the top of [`setup.sh`](setup.sh).
 
 > Downloads third-party software and runs it with `sudo`. Read the script first. Unofficial, use at your own risk.
 
