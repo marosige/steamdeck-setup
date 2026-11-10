@@ -46,6 +46,20 @@ plugin_dir_of() {
   sudo grep -l -s "\"name\": *\"$1\"" "$HB"/plugins/*/plugin.json 2>/dev/null | head -1 || true
 }
 
+# Write the enabled flag + settings for a theme. CSS Loader reads config_ROOT.json or
+# config_USER.json depending on which user it runs as, so write both.
+# An existing config is NEVER overwritten.
+ensure_theme_config() {
+  local dir="$1" theme="$2" suffix
+  for suffix in ROOT USER; do
+    if [ ! -e "$HB/themes/$dir/config_$suffix.json" ]; then
+      jq -n --argjson v "${THEME_CONFIG[$theme]:-{\}}" '{active:true} + $v' \
+        | sudo tee "$HB/themes/$dir/config_$suffix.json" >/dev/null
+      CHANGED=1
+    fi
+  done
+}
+
 # Helper for adding non-Steam shortcuts: use the local copy if run from a clone,
 # otherwise download it (when run via `curl | bash`).
 shortcut_tool() {
@@ -157,7 +171,8 @@ main() {
   for theme in "${THEME_ORDER[@]}"; do
     existing="$(sudo grep -l -s "\"name\": *\"$theme\"" "$HB"/themes/*/theme.json 2>/dev/null | head -1 || true)"
     if [ -n "$existing" ] && [ "$FORCE" != 1 ]; then
-      echo "  = $theme (already installed, your settings are untouched)"; continue
+      ensure_theme_config "$(basename "$(dirname "$existing")")" "$theme"
+      echo "  = $theme (already installed, existing settings untouched)"; continue
     fi
     q="$(python3 -c 'import urllib.parse,sys;print(urllib.parse.quote(sys.argv[1]))' "$theme")"
     blob="$(curl -fsSL "$THEME_API/themes?search=$q" | jq -r --arg n "$theme" '[.items[]|select(.name==$n)][0].download.id // empty')"
@@ -170,12 +185,7 @@ main() {
     # on update only the theme files are replaced, the existing config stays
     sudo mkdir -p "$HB/themes/$dir"
     sudo cp -a "$stage/$dir/." "$HB/themes/$dir/"
-    # CSS Loader runs as root and reads enabled state + settings from here.
-    # An existing config is NEVER overwritten.
-    if [ ! -e "$HB/themes/$dir/config_ROOT.json" ]; then
-      jq -n --argjson v "${THEME_CONFIG[$theme]:-{\}}" '{active:true} + $v' \
-        | sudo tee "$HB/themes/$dir/config_ROOT.json" >/dev/null
-    fi
+    ensure_theme_config "$dir" "$theme"
     CHANGED=1
     echo "  + $theme"
   done
