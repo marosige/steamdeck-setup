@@ -46,6 +46,38 @@ plugin_dir_of() {
   sudo grep -l -s "\"name\": *\"$1\"" "$HB"/plugins/*/plugin.json 2>/dev/null | head -1 || true
 }
 
+# Helper for adding non-Steam shortcuts: use the local copy if run from a clone,
+# otherwise download it (when run via `curl | bash`).
+shortcut_tool() {
+  local here; here="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd || true)"
+  if [ -f "$here/tools/add_shortcut.py" ]; then
+    python3 -I "$here/tools/add_shortcut.py" "$@"
+  else
+    curl -fsSL https://raw.githubusercontent.com/marosige/steamdeck-setup/main/tools/add_shortcut.py -o "$TMP/add_shortcut.py"
+    python3 -I "$TMP/add_shortcut.py" "$@"
+  fi
+}
+has_shortcut() { shortcut_tool --has "$1" >/dev/null 2>&1; }
+
+# Steam rewrites shortcuts.vdf while it runs, so it has to be closed to edit it.
+STEAM_WAS_RUNNING=0
+stop_steam() {
+  if pgrep -x steam >/dev/null; then
+    STEAM_WAS_RUNNING=1
+    echo "  closing Steam for a moment..."
+    steam -shutdown >/dev/null 2>&1 || true
+    for _ in $(seq 1 30); do pgrep -x steam >/dev/null || break; sleep 1; done
+    pkill -x steam 2>/dev/null || true
+  fi
+}
+start_steam() {
+  if [ "$STEAM_WAS_RUNNING" = 1 ]; then
+    echo "  starting Steam again..."
+    nohup steam -silent >/dev/null 2>&1 &
+    STEAM_WAS_RUNNING=0
+  fi
+}
+
 # Everything lives in main() so bash parses the whole script before running it.
 # That matters for `curl | bash`: there bash reads the script from stdin, and
 # anything that reads stdin (like passwd) would otherwise swallow the script.
@@ -173,6 +205,34 @@ main() {
       echo "  + Battle.net installed. Restart Steam to see it in your Library, then log in on first launch."
     else
       warn "Battle.net install failed, see $bnet_log (re-run the script to retry)"
+    fi
+  fi
+
+  # --- 5b. Steam library shortcuts -------------------------------------
+  log "Steam library shortcuts"
+  # Battle.net: NonSteamLaunchers adds its shortcut when its scanner runs. If it's
+  # missing, nudge the scanner service and wait a bit.
+  if [ "$INSTALL_BATTLENET" = 1 ] && ! has_shortcut "Battle.net"; then
+    if systemctl --user list-unit-files 2>/dev/null | grep -q nslgamescanner.service; then
+      echo "  asking NonSteamLaunchers to scan for Battle.net..."
+      systemctl --user restart nslgamescanner.service 2>/dev/null || true
+      for _ in $(seq 1 30); do has_shortcut "Battle.net" && break; sleep 2; done
+    fi
+    if has_shortcut "Battle.net"; then
+      echo "  + Battle.net shortcut added"
+    else
+      warn "No Battle.net shortcut yet. In Steam open the NSL entry (Steam menu) and press the search/scan button."
+    fi
+  fi
+  # CurseForge: a Flatpak has no Steam entry by itself, add one.
+  if [ "$INSTALL_CURSEFORGE" = 1 ] && flatpak info com.overwolf.curseforge >/dev/null 2>&1; then
+    if has_shortcut "CurseForge"; then
+      echo "  = CurseForge shortcut already exists"
+    else
+      stop_steam
+      shortcut_tool --name "CurseForge" --exe /usr/bin/flatpak --args "run com.overwolf.curseforge" \
+        && echo "  + CurseForge shortcut added" || warn "Could not add the CurseForge shortcut"
+      start_steam
     fi
   fi
 
