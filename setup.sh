@@ -58,7 +58,7 @@ main() {
   flock -n 9 || { echo "Another instance of this script is already running."; exit 1; }
 
   TMP="$(mktemp -d)"
-  trap 'rm -rf "$TMP"' EXIT
+  trap 'rm -rf "$TMP"; [ -n "${SUDO_KEEPALIVE:-}" ] && kill "$SUDO_KEEPALIVE" 2>/dev/null || true' EXIT
 
   for c in curl jq unzip python3; do need "$c"; done
 
@@ -68,6 +68,10 @@ main() {
     until passwd; do warn "That didn't work, try again:"; done
   fi
   sudo -v
+  # Keep the sudo ticket alive: the Battle.net step can take long enough for it to
+  # expire, which would prompt for the password again at the end.
+  ( while kill -0 "$$" 2>/dev/null; do sudo -n true 2>/dev/null; sleep 50; done ) &
+  SUDO_KEEPALIVE=$!
 
   # CurseForge is a big download (~160 MB + the freedesktop runtime, since SteamOS
   # doesn't ship it), so start it in the background and let the other steps run meanwhile.
