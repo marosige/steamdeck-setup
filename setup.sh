@@ -69,6 +69,20 @@ main() {
   fi
   sudo -v
 
+  # CurseForge is a big download (~160 MB + the freedesktop runtime, since SteamOS
+  # doesn't ship it), so start it in the background and let the other steps run meanwhile.
+  CF_PID=""; CF_LOG="${XDG_CACHE_HOME:-$HOME/.cache}/steamdeck-setup-curseforge.log"; mkdir -p "$(dirname "$CF_LOG")"
+  if [ "$INSTALL_CURSEFORGE" = 1 ]; then
+    if flatpak info com.overwolf.curseforge >/dev/null 2>&1; then
+      log "CurseForge already installed, skipping"
+    else
+      log "Starting CurseForge download in the background"
+      ( flatpak remote-add --if-not-exists --user flathub https://dl.flathub.org/repo/flathub.flatpakrepo \
+        && flatpak install --user -y --noninteractive flathub com.overwolf.curseforge ) >"$CF_LOG" 2>&1 &
+      CF_PID=$!
+    fi
+  fi
+
   # --- 1. Decky Loader -------------------------------------------------
   if [ ! -d "$HB/services" ]; then
     log "Installing Decky Loader"
@@ -130,15 +144,12 @@ main() {
     echo "  + $theme"
   done
 
-  # --- 4. CurseForge ---------------------------------------------------
-  if [ "$INSTALL_CURSEFORGE" = 1 ]; then
+  # --- 4. CurseForge: wait for the background install started above ---
+  if [ -n "${CF_PID:-}" ]; then
     log "CurseForge (Flatpak)"
-    flatpak remote-add --if-not-exists --user flathub https://dl.flathub.org/repo/flathub.flatpakrepo
-    if flatpak info --user com.overwolf.curseforge >/dev/null 2>&1 || flatpak info com.overwolf.curseforge >/dev/null 2>&1; then
-      echo "  = CurseForge already installed, skipping"
-    else
-      flatpak install --user -y flathub com.overwolf.curseforge
-    fi
+    if kill -0 "$CF_PID" 2>/dev/null; then echo "  still downloading in the background, waiting..."; fi
+    if wait "$CF_PID"; then echo "  + CurseForge ready"
+    else warn "CurseForge install failed, see $CF_LOG (re-run the script to retry)"; fi
   fi
 
   # --- 5. Battle.net ---------------------------------------------------
