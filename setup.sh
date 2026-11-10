@@ -24,6 +24,9 @@ THEME_ORDER=("Clean Gameview" "Round" "Switch Like Home")
 
 INSTALL_CURSEFORGE=1
 INSTALL_BATTLENET=1
+
+# Akkumulator toltesi korlat (%), 0 = ne allitsa
+CHARGE_LIMIT=80
 # ====================================================================
 
 HB="$HOME/homebrew"
@@ -141,6 +144,22 @@ elif [ "$INSTALL_BATTLENET" = 1 ]; then
   warn "Ez grafikus telepitot nyit – kovesd a lepeseket; a Steam ujrainditasat kerheti."
   curl -fsSL https://raw.githubusercontent.com/moraroy/NonSteamLaunchers-On-Steam-Deck/main/NonSteamLaunchers.sh \
     | /bin/bash -s -- "Battle.net"
+fi
+
+# --- 6. Gaming Mode: toltesi korlat ----------------------------------
+if [ "${CHARGE_LIMIT:-0}" -gt 0 ]; then
+  log "Toltesi korlat: ${CHARGE_LIMIT}%"
+  if command -v steamosctl >/dev/null; then
+    if [ "$(steamosctl get-max-charge-level 2>/dev/null || true)" = "$CHARGE_LIMIT" ]; then
+      echo "  = mar be van allitva"
+    elif steamosctl set-max-charge-level "$CHARGE_LIMIT"; then
+      echo "  + beallitva: ${CHARGE_LIMIT}%"
+    else
+      warn "Nem sikerult beallitani – allitsd be kezzel: Settings > Power > Enable battery charge limit"
+    fi
+  else
+    warn "steamosctl nincs (regi SteamOS?) – allitsd be kezzel: Settings > Power > Enable battery charge limit"
+  fi
 fi
 
 # --- Decky ujrainditas -----------------------------------------------

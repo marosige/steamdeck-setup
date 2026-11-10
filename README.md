@@ -17,6 +17,7 @@ No `sudo` password after a reset? The script asks you to set one.
 
 - Installs **Decky Loader** with the **CSS Loader** and **SteamGridDB** plugins
 - Installs the CSS Loader themes **Clean Gameview**, **Round**, **Switch Like Home**, pre-configured
+- Sets the battery charge limit to 80% (Settings → Power)
 - Installs **CurseForge** (Flatpak)
 - Installs **Battle.net** (via [NonSteamLaunchers](https://github.com/moraroy/NonSteamLaunchers-On-Steam-Deck); opens an installer you click through)
 
