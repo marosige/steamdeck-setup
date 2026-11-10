@@ -164,9 +164,16 @@ main() {
     log "Battle.net already installed, skipping"
   elif [ "$INSTALL_BATTLENET" = 1 ]; then
     log "Installing Battle.net (NonSteamLaunchers)"
-    warn "This opens a graphical installer - click through it. It may ask you to restart Steam."
-    curl -fsSL https://raw.githubusercontent.com/moraroy/NonSteamLaunchers-On-Steam-Deck/main/NonSteamLaunchers.sh \
-      | /bin/bash -s -- "Battle.net"
+    echo "  A Battle.net installer window will open - just click through it (this can take a few minutes)."
+    # The NonSteamLaunchers script is very chatty; keep its output in a log file
+    local bnet_log="${XDG_CACHE_HOME:-$HOME/.cache}/steamdeck-setup-battlenet.log"
+    mkdir -p "$(dirname "$bnet_log")"
+    if curl -fsSL https://raw.githubusercontent.com/moraroy/NonSteamLaunchers-On-Steam-Deck/main/NonSteamLaunchers.sh \
+        | /bin/bash -s -- "Battle.net" >"$bnet_log" 2>&1; then
+      echo "  + Battle.net done (it may ask you to restart Steam later)"
+    else
+      warn "Battle.net install failed, see $bnet_log (re-run the script to retry)"
+    fi
   fi
 
   # --- 6. Battery charge limit -----------------------------------------
