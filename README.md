@@ -1,6 +1,6 @@
 # steamdeck-setup
 
-Script that sets up a freshly reset Steam Deck in one go. 🇭🇺 [Magyar](README.hu.md)
+Script that sets up a freshly reset Steam Deck in one go.
 
 ## Run
 
