@@ -19,7 +19,7 @@ No `sudo` password after a reset? The script asks you to set one.
 - Installs the CSS Loader themes **Clean Gameview**, **Round**, **Switch Like Home**, pre-configured
 - Sets the battery charge limit to 80% (Settings → Power)
 - Installs **CurseForge** (Flatpak)
-- Installs **Battle.net** (via [NonSteamLaunchers](https://github.com/moraroy/NonSteamLaunchers-On-Steam-Deck); opens an installer you click through)
+- Installs **Battle.net** (via [NonSteamLaunchers](https://github.com/moraroy/NonSteamLaunchers-On-Steam-Deck); installs silently, log in on first launch)
 
 Safe to re-run: installed items are skipped and your theme settings are never overwritten.
 `FORCE=1` reinstalls. Plugins, themes and settings are editable at the top of [`setup.sh`](setup.sh).
